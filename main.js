@@ -2,34 +2,33 @@ import './main.css'
 
 import * as THREE from 'three';
 
-			import Stats from 'three/addons/libs/stats.module.js';
-			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+			import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 
-			import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
-			import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
+			import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js'
+			import { SimplexNoise } from 'three/addons/math/SimplexNoise.js'
 
-      import { heightmapFragmentShader } from './shaders/heightmapFragmentShader.js';
-      import { waterVertexShader } from './shaders/waterVertexShader.js';
+      import { heightmapFragmentShader } from './shaders/heightmapFragmentShader.js'
+      import { waterVertexShader } from './shaders/waterVertexShader.js'
 
 			// Texture width for simulation
-			const WIDTH = 128;
+			const WIDTH = 128
 
 			// Water size in system units
-			const BOUNDS = 512;
-			const BOUNDS_HALF = BOUNDS * 0.5;
+			const BOUNDS = 512
+			const BOUNDS_HALF = BOUNDS * 0.5
 
-			let container, stats;
-			let camera, scene, renderer;
-			let mouseMoved = false;
-			const mouseCoords = new THREE.Vector2();
-			const raycaster = new THREE.Raycaster();
+			let container
+			let camera, scene, renderer
+			let mouseMoved = false
+			const mouseCoords = new THREE.Vector2()
+			const raycaster = new THREE.Raycaster()
 
       let time = 0
-			let waterMesh;
-			let meshRay;
-			let gpuCompute;
-			let heightmapVariable;
-			let waterUniforms;
+			let waterMesh
+			let meshRay
+			let gpuCompute
+			let heightmapVariable
+			let waterUniforms
 
 			const waterNormal = new THREE.Vector3();
 
@@ -62,8 +61,6 @@ import * as THREE from 'three';
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
 
-				stats = new Stats();
-				container.appendChild( stats.dom )
 
 				container.style.touchAction = 'none'
 				container.addEventListener( 'pointermove', onPointerMove )
@@ -85,8 +82,8 @@ import * as THREE from 'three';
 				const gui = new GUI()
 
 				const effectController = {
-					mouseSize: 20.0,
-					viscosity: 0.98,
+					mouseSize: 80.0,
+					viscosity: 0.995,
 				}
 
 				const valuesChanger = function () {
@@ -267,7 +264,6 @@ import * as THREE from 'three';
         // console.log( heightmapVariable.material.uniforms[ 'uTime' ].value)
 
 				render();
-				stats.update();
 
 			}
 
