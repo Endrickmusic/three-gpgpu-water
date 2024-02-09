@@ -223,7 +223,7 @@ import * as THREE from 'three';
 				smoothShader = gpuCompute.createShaderMaterial( smoothFragmentShader, { smoothTexture: { value: null } } );
 
 				// Create compute shader to read water level
-				readWaterLevelShader = gpuCompute.createShaderMaterial( readWaterLevelShader, {
+				readWaterLevelShader = gpuCompute.createShaderMaterial( readWaterLevelFragmentShader, {
 					point1: { value: new THREE.Vector2() },
 					levelTexture: { value: null }
 				} );
