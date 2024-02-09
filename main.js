@@ -26,15 +26,14 @@ import * as THREE from 'three';
 			const mouseCoords = new THREE.Vector2();
 			const raycaster = new THREE.Raycaster();
 
+      let time = 0
 			let waterMesh;
 			let meshRay;
 			let gpuCompute;
 			let heightmapVariable;
 			let waterUniforms;
 			let smoothShader;
-			let readWaterLevelShader;
-			let readWaterLevelRenderTarget;
-			let readWaterLevelImage;
+
 			const waterNormal = new THREE.Vector3();
 
 			const simplex = new SimplexNoise();
@@ -193,6 +192,7 @@ import * as THREE from 'three';
 				heightmapVariable.material.uniforms[ 'mouseSize' ] = { value: 20.0 };
 				heightmapVariable.material.uniforms[ 'viscosityConstant' ] = { value: 0.98 };
 				heightmapVariable.material.uniforms[ 'heightCompensation' ] = { value: 0 };
+				heightmapVariable.material.uniforms[ 'uTime' ] = { value: 0 };
 				heightmapVariable.material.defines.BOUNDS = BOUNDS.toFixed( 1 );
 
 				const error = gpuCompute.init();
@@ -203,34 +203,13 @@ import * as THREE from 'three';
 				}
 
 				// Create compute shader to smooth the water surface and velocity
-				smoothShader = gpuCompute.createShaderMaterial( smoothFragmentShader, { smoothTexture: { value: null } } );
-
-				// Create compute shader to read water level
-				readWaterLevelShader = gpuCompute.createShaderMaterial( readWaterLevelFragmentShader, {
-					point1: { value: new THREE.Vector2() },
-					levelTexture: { value: null }
-				} );
-				readWaterLevelShader.defines.WIDTH = WIDTH.toFixed( 1 );
-				readWaterLevelShader.defines.BOUNDS = BOUNDS.toFixed( 1 );
-
-				// Create a 4x1 pixel image and a render target (Uint8, 4 channels, 1 byte per channel) to read water height and orientation
-				readWaterLevelImage = new Uint8Array( 4 * 1 * 4 );
-
-				readWaterLevelRenderTarget = new THREE.WebGLRenderTarget( 4, 1, {
-					wrapS: THREE.ClampToEdgeWrapping,
-					wrapT: THREE.ClampToEdgeWrapping,
-					minFilter: THREE.NearestFilter,
-					magFilter: THREE.NearestFilter,
-					format: THREE.RGBAFormat,
-					type: THREE.UnsignedByteType,
-					depthBuffer: false
-				} );
+				smoothShader = gpuCompute.createShaderMaterial( smoothFragmentShader, { smoothTexture: { value: null } } )
 
 			}
 
 			function fillTexture( texture ) {
 
-				const waterMaxHeight = 10;
+				const waterMaxHeight = 15;
 
 				function noise( x, y ) {
 
@@ -239,7 +218,7 @@ import * as THREE from 'three';
 					let r = 0;
 					for ( let i = 0; i < 15; i ++ ) {
 
-						r += multR * simplex.noise( x * mult, y * mult );
+						r += multR * simplex.noise( x * mult, y * mult);
 						multR *= 0.53 + 0.025 * i;
 						mult *= 1.25;
 
@@ -269,7 +248,6 @@ import * as THREE from 'three';
 					}
 
 				}
-
 			}
 
 			function smoothWater() {
@@ -317,7 +295,11 @@ import * as THREE from 'three';
 
 			function animate() {
 
-				requestAnimationFrame( animate );
+				requestAnimationFrame( animate )
+
+        time += 0.04
+        heightmapVariable.material.uniforms[ 'uTime' ].value = time
+        // console.log( heightmapVariable.material.uniforms[ 'uTime' ].value)
 
 				render();
 				stats.update();
@@ -352,6 +334,7 @@ import * as THREE from 'three';
 					uniforms[ 'mousePos' ].value.set( 10000, 10000 );
 
 				}
+        
 
 				// Do the gpu computation
 				gpuCompute.compute();
@@ -359,8 +342,13 @@ import * as THREE from 'three';
 				// Get compute output in custom uniform
 				waterUniforms[ 'heightmap' ].value = gpuCompute.getCurrentRenderTarget( heightmapVariable ).texture;
 
+        
+
+
 				// Render
 				renderer.render( scene, camera );
+
+        
 
 			}
 
