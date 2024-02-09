@@ -9,8 +9,6 @@ import * as THREE from 'three';
 			import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
 
       import { heightmapFragmentShader } from './shaders/heightmapFragmentShader.js';
-      import { smoothFragmentShader } from './shaders/smoothFragmentShader.js';
-      import { readWaterLevelFragmentShader } from './shaders/readWaterLevelFragmentShader.js';
       import { waterVertexShader } from './shaders/waterVertexShader.js';
 
 			// Texture width for simulation
@@ -32,7 +30,6 @@ import * as THREE from 'three';
 			let gpuCompute;
 			let heightmapVariable;
 			let waterUniforms;
-			let smoothShader;
 
 			const waterNormal = new THREE.Vector3();
 
@@ -102,16 +99,6 @@ import * as THREE from 'three';
 				gui.add( effectController, 'mouseSize', 1.0, 100.0, 1.0 ).onChange( valuesChanger )
 				gui.add( effectController, 'viscosity', 0.9, 0.999, 0.001 ).onChange( valuesChanger )
 				
-        const buttonSmooth = {
-					smoothWater: function () {
-
-						smoothWater()
-
-					}
-				}
-
-				gui.add( buttonSmooth, 'smoothWater' )
-
 
 				initWater()
 
@@ -202,9 +189,6 @@ import * as THREE from 'three';
 
 				}
 
-				// Create compute shader to smooth the water surface and velocity
-				smoothShader = gpuCompute.createShaderMaterial( smoothFragmentShader, { smoothTexture: { value: null } } )
-
 			}
 
 			function fillTexture( texture ) {
@@ -249,25 +233,6 @@ import * as THREE from 'three';
 
 				}
 			}
-
-			function smoothWater() {
-
-				const currentRenderTarget = gpuCompute.getCurrentRenderTarget( heightmapVariable );
-				const alternateRenderTarget = gpuCompute.getAlternateRenderTarget( heightmapVariable );
-
-				for ( let i = 0; i < 10; i ++ ) {
-
-					smoothShader.uniforms[ 'smoothTexture' ].value = currentRenderTarget.texture;
-					gpuCompute.doRenderTarget( smoothShader, alternateRenderTarget );
-
-					smoothShader.uniforms[ 'smoothTexture' ].value = alternateRenderTarget.texture;
-					gpuCompute.doRenderTarget( smoothShader, currentRenderTarget );
-
-				}
-
-			}
-
-
 
 			function onWindowResize() {
 
@@ -342,13 +307,8 @@ import * as THREE from 'three';
 				// Get compute output in custom uniform
 				waterUniforms[ 'heightmap' ].value = gpuCompute.getCurrentRenderTarget( heightmapVariable ).texture;
 
-        
-
-
 				// Render
 				renderer.render( scene, camera );
-
-        
 
 			}
 
