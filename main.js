@@ -223,7 +223,7 @@ import * as THREE from 'three';
 				smoothShader = gpuCompute.createShaderMaterial( smoothFragmentShader, { smoothTexture: { value: null } } );
 
 				// Create compute shader to read water level
-				readWaterLevelShader = gpuCompute.createShaderMaterial( readWaterLevelShader, {
+				readWaterLevelShader = gpuCompute.createShaderMaterial( readWaterLevelFragmentShader, {
 					point1: { value: new THREE.Vector2() },
 					levelTexture: { value: null }
 				} );
@@ -346,24 +346,23 @@ import * as THREE from 'three';
 
 						// Read water level and orientation
 						const u = 0.5 * sphere.position.x / BOUNDS_HALF + 0.5;
-						const v = 1 - ( 0.5 * sphere.position.z / BOUNDS_HALF + 0.5 );
-						readWaterLevelShader.uniforms[ 'point1' ].value.set( u, v );
-						gpuCompute.doRenderTarget( readWaterLevelShader, readWaterLevelRenderTarget );
+						const v = 1 - ( 0.5 * sphere.position.z / BOUNDS_HALF + 0.5 )
+						readWaterLevelShader.uniforms[ 'point1' ].value.set( u, v )
+						gpuCompute.doRenderTarget( readWaterLevelShader, readWaterLevelRenderTarget )
 
-						renderer.readRenderTargetPixels( readWaterLevelRenderTarget, 0, 0, 4, 1, readWaterLevelImage );
-						const pixels = new Float32Array( readWaterLevelImage.buffer );
-
+						renderer.readRenderTargetPixels( readWaterLevelRenderTarget, 0, 0, 4, 1, readWaterLevelImage )
+						const pixels = new Float32Array( readWaterLevelImage.buffer )
 						// Get orientation
-						waterNormal.set( pixels[ 1 ], 0, - pixels[ 2 ] );
+						waterNormal.set( pixels[ 1 ], 0, - pixels[ 2 ] )
 
-						const pos = sphere.position;
+						const pos = sphere.position
 
 						// Set height
-						pos.y = pixels[ 0 ];
+						pos.y = pixels[ 0 ]
 
 						// Move sphere
-						waterNormal.multiplyScalar( 0.1 );
-						sphere.userData.velocity.add( waterNormal );
+						waterNormal.multiplyScalar( 0.1 )
+						sphere.userData.velocity.add( waterNormal )
 						sphere.userData.velocity.multiplyScalar( 0.998 );
 						pos.add( sphere.userData.velocity );
 
