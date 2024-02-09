@@ -37,10 +37,6 @@ import * as THREE from 'three';
 			let readWaterLevelImage;
 			const waterNormal = new THREE.Vector3();
 
-			const NUM_SPHERES = 5;
-			const spheres = [];
-			let spheresEnabled = true;
-
 			const simplex = new SimplexNoise();
 
 			init();
@@ -48,12 +44,12 @@ import * as THREE from 'three';
 
 			function init() {
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+				container = document.createElement( 'div' )
+				document.body.appendChild( container )
 
-				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 3000 );
-				camera.position.set( 0, 200, 350 );
-				camera.lookAt( 0, 0, 0 );
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 3000 )
+				camera.position.set( 0, 200, 350 )
+				camera.lookAt( 0, 0, 0 )
 
 				scene = new THREE.Scene();
 
@@ -71,10 +67,10 @@ import * as THREE from 'three';
 				container.appendChild( renderer.domElement );
 
 				stats = new Stats();
-				container.appendChild( stats.dom );
+				container.appendChild( stats.dom )
 
-				container.style.touchAction = 'none';
-				container.addEventListener( 'pointermove', onPointerMove );
+				container.style.touchAction = 'none'
+				container.addEventListener( 'pointermove', onPointerMove )
 
 				document.addEventListener( 'keydown', function ( event ) {
 
@@ -86,63 +82,50 @@ import * as THREE from 'three';
 
 					}
 
-				} );
+				} )
 
-				window.addEventListener( 'resize', onWindowResize );
+				window.addEventListener( 'resize', onWindowResize )
 
-
-				const gui = new GUI();
+				const gui = new GUI()
 
 				const effectController = {
 					mouseSize: 20.0,
 					viscosity: 0.98,
-					spheresEnabled: spheresEnabled
-				};
+				}
 
 				const valuesChanger = function () {
 
-					heightmapVariable.material.uniforms[ 'mouseSize' ].value = effectController.mouseSize;
-					heightmapVariable.material.uniforms[ 'viscosityConstant' ].value = effectController.viscosity;
-					spheresEnabled = effectController.spheresEnabled;
-					for ( let i = 0; i < NUM_SPHERES; i ++ ) {
+					heightmapVariable.material.uniforms[ 'mouseSize' ].value = effectController.mouseSize
+					heightmapVariable.material.uniforms[ 'viscosityConstant' ].value = effectController.viscosity
 
-						if ( spheres[ i ] ) {
+        }  
 
-							spheres[ i ].visible = spheresEnabled;
-
-						}
-
-					}
-
-				};
-
-				gui.add( effectController, 'mouseSize', 1.0, 100.0, 1.0 ).onChange( valuesChanger );
-				gui.add( effectController, 'viscosity', 0.9, 0.999, 0.001 ).onChange( valuesChanger );
-				gui.add( effectController, 'spheresEnabled' ).onChange( valuesChanger );
-				const buttonSmooth = {
+				gui.add( effectController, 'mouseSize', 1.0, 100.0, 1.0 ).onChange( valuesChanger )
+				gui.add( effectController, 'viscosity', 0.9, 0.999, 0.001 ).onChange( valuesChanger )
+				
+        const buttonSmooth = {
 					smoothWater: function () {
 
-						smoothWater();
+						smoothWater()
 
 					}
-				};
-				gui.add( buttonSmooth, 'smoothWater' );
+				}
+
+				gui.add( buttonSmooth, 'smoothWater' )
 
 
-				initWater();
+				initWater()
 
-				createSpheres();
+				valuesChanger()
 
-				valuesChanger();
-
-			}
+      }
 
 
 			function initWater() {
 
 				const materialColor = 0x0040C0;
 
-				const geometry = new THREE.PlaneGeometry( BOUNDS, BOUNDS, WIDTH - 1, WIDTH - 1 );
+				const geometry = new THREE.PlaneGeometry( BOUNDS, BOUNDS, WIDTH - 1, WIDTH - 1 )
 
 				// material: make a THREE.ShaderMaterial clone of THREE.MeshPhongMaterial, with customized vertex shader
 				const material = new THREE.ShaderMaterial( {
@@ -306,96 +289,7 @@ import * as THREE from 'three';
 
 			}
 
-			function createSpheres() {
 
-				const sphereTemplate = new THREE.Mesh( new THREE.SphereGeometry( 4, 24, 12 ), new THREE.MeshPhongMaterial( { color: 0xFFFF00 } ) );
-
-				for ( let i = 0; i < NUM_SPHERES; i ++ ) {
-
-					let sphere = sphereTemplate;
-					if ( i < NUM_SPHERES - 1 ) {
-
-						sphere = sphereTemplate.clone();
-
-					}
-
-					sphere.position.x = ( Math.random() - 0.5 ) * BOUNDS * 0.7;
-					sphere.position.z = ( Math.random() - 0.5 ) * BOUNDS * 0.7;
-
-					sphere.userData.velocity = new THREE.Vector3();
-
-					scene.add( sphere );
-
-					spheres[ i ] = sphere;
-
-				}
-
-			}
-
-			function sphereDynamics() {
-
-				const currentRenderTarget = gpuCompute.getCurrentRenderTarget( heightmapVariable );
-
-				readWaterLevelShader.uniforms[ 'levelTexture' ].value = currentRenderTarget.texture;
-
-				for ( let i = 0; i < NUM_SPHERES; i ++ ) {
-
-					const sphere = spheres[ i ];
-
-					if ( sphere ) {
-
-						// Read water level and orientation
-						const u = 0.5 * sphere.position.x / BOUNDS_HALF + 0.5;
-						const v = 1 - ( 0.5 * sphere.position.z / BOUNDS_HALF + 0.5 );
-						readWaterLevelShader.uniforms[ 'point1' ].value.set( u, v );
-						gpuCompute.doRenderTarget( readWaterLevelShader, readWaterLevelRenderTarget );
-
-						renderer.readRenderTargetPixels( readWaterLevelRenderTarget, 0, 0, 4, 1, readWaterLevelImage );
-						const pixels = new Float32Array( readWaterLevelImage.buffer );
-
-						// Get orientation
-						waterNormal.set( pixels[ 1 ], 0, - pixels[ 2 ] );
-
-						const pos = sphere.position;
-
-						// Set height
-						pos.y = pixels[ 0 ];
-
-						// Move sphere
-						waterNormal.multiplyScalar( 0.1 );
-						sphere.userData.velocity.add( waterNormal );
-						sphere.userData.velocity.multiplyScalar( 0.998 );
-						pos.add( sphere.userData.velocity );
-
-						if ( pos.x < - BOUNDS_HALF ) {
-
-							pos.x = - BOUNDS_HALF + 0.001;
-							sphere.userData.velocity.x *= - 0.3;
-
-						} else if ( pos.x > BOUNDS_HALF ) {
-
-							pos.x = BOUNDS_HALF - 0.001;
-							sphere.userData.velocity.x *= - 0.3;
-
-						}
-
-						if ( pos.z < - BOUNDS_HALF ) {
-
-							pos.z = - BOUNDS_HALF + 0.001;
-							sphere.userData.velocity.z *= - 0.3;
-
-						} else if ( pos.z > BOUNDS_HALF ) {
-
-							pos.z = BOUNDS_HALF - 0.001;
-							sphere.userData.velocity.z *= - 0.3;
-
-						}
-
-					}
-
-				}
-
-			}
 
 			function onWindowResize() {
 
@@ -461,12 +355,6 @@ import * as THREE from 'three';
 
 				// Do the gpu computation
 				gpuCompute.compute();
-
-				if ( spheresEnabled ) {
-
-					sphereDynamics();
-
-				}
 
 				// Get compute output in custom uniform
 				waterUniforms[ 'heightmap' ].value = gpuCompute.getCurrentRenderTarget( heightmapVariable ).texture;
